@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Ba
 import { Activity, AlertTriangle, CheckCircle2, Download, Video, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { WILAYAS } from '../constants/wilayas';
+import * as XLSX from 'xlsx';
 
 export const Dashboard: React.FC = () => {
   const { cameras, selectedWilaya } = useCameras();
@@ -55,23 +56,32 @@ export const Dashboard: React.FC = () => {
   };
 
   const exportData = () => {
-    const headers = ['ID', 'Name', 'IP Address', 'Location', 'Status', 'Offline Reason', 'Last Updated'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredCameras.map(c => 
-        `${c.id},"${c.name}","${c.ipAddress}","${c.location}",${c.status},${c.offlineReason || 'N/A'},${format(new Date(c.lastUpdated), 'yyyy-MM-dd HH:mm:ss')}`
-      )
-    ].join('\n');
+    const offlineCameras = filteredCameras.filter(c => c.status === 'Offline');
+    
+    if (offlineCameras.length === 0) {
+      alert('No offline cameras to export.');
+      return;
+    }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `alger_surv_export_${wilaya.name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const data = offlineCameras.map(c => ({
+      'ID': c.id,
+      'Name': c.name,
+      'IP Address': c.ipAddress,
+      'Location': c.location,
+      'Status': c.status,
+      'Offline Reason': c.offlineReason || 'N/A',
+      'Last Updated': format(new Date(c.lastUpdated), 'yyyy-MM-dd HH:mm:ss')
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Offline Devices");
+    
+    // Generate filename
+    const filename = `offline_devices_${wilaya.name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
+    
+    // Export file
+    XLSX.writeFile(workbook, filename);
   };
 
   return (
@@ -83,10 +93,10 @@ export const Dashboard: React.FC = () => {
         </div>
         <button
           onClick={exportData}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-900/30 transition-colors font-mono text-sm uppercase tracking-wider shadow-[0_0_10px_rgba(0,243,255,0.2)]"
+          className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-red-500/50 text-red-400 rounded-lg hover:bg-red-900/30 transition-colors font-mono text-sm uppercase tracking-wider shadow-[0_0_10px_rgba(255,0,60,0.2)]"
         >
           <Download className="w-4 h-4" />
-          Export Situation
+          Export Offline (Excel)
         </button>
       </div>
 
