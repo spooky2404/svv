@@ -129,15 +129,23 @@ export const MapPage: React.FC = () => {
                           <AlertTriangle className="w-3 h-3" /> Offline
                         </span>
                         {canEdit ? (
-                          <select
-                            value={cam.offlineReason || ''}
-                            onChange={(e) => updateCameraStatus(cam.id, 'Offline', e.target.value as OfflineReason)}
-                            className="bg-red-900/20 border border-red-500/30 text-red-400 text-[10px] font-mono rounded px-1.5 py-0.5 focus:outline-none focus:border-red-500 cursor-pointer"
-                          >
-                            <option value="ERSV">ERSV</option>
-                            <option value="ERMA">ERMA</option>
-                            <option value="AT">AT</option>
-                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={cam.offlineReason || ''}
+                              onChange={(e) => updateCameraStatus(cam.id, 'Offline', e.target.value as OfflineReason)}
+                              className="bg-red-900/20 border border-red-500/30 text-red-400 text-[10px] font-mono rounded px-1.5 py-0.5 focus:outline-none focus:border-red-500 cursor-pointer"
+                            >
+                              <option value="ERSV">ERSV</option>
+                              <option value="ERMA">ERMA</option>
+                              <option value="AT">AT</option>
+                            </select>
+                            <button
+                              onClick={() => updateCameraStatus(cam.id, 'Online')}
+                              className="px-2 py-0.5 bg-green-900/20 border border-green-500/30 text-[#39ff14] text-[10px] font-mono uppercase rounded hover:bg-green-900/40 transition-colors"
+                            >
+                              Restore
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-[#ff003c] text-[10px] font-mono">({cam.offlineReason})</span>
                         )}

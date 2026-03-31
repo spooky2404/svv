@@ -160,6 +160,14 @@ export const CameraGrid: React.FC = () => {
                       )}
                     </div>
                   )}
+                  {canEdit && (
+                    <button
+                      onClick={() => handleStatusToggle(cam.id, cam.status)}
+                      className="mt-4 px-4 py-1.5 bg-green-900/40 border border-green-500/50 text-[#39ff14] text-[10px] font-mono uppercase tracking-widest rounded hover:bg-green-900/60 transition-all shadow-[0_0_10px_rgba(57,255,20,0.1)]"
+                    >
+                      Restore Online
+                    </button>
+                  )}
                 </div>
               )}
 
