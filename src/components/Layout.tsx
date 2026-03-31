@@ -57,18 +57,30 @@ export const Layout: React.FC = () => {
           <p className="text-xs text-gray-500 mt-1 font-mono">SYS_CTRL_V2.0</p>
           
           <div className="mt-4">
-            <label className="block text-xs font-mono text-gray-400 mb-1 uppercase tracking-wider flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> Working Wilaya
+            <label className="block text-[10px] font-mono text-gray-500 mb-2 uppercase tracking-widest flex items-center gap-1">
+              <MapPin className="w-3 h-3" /> Select Region (1RM)
             </label>
-            <select
-              value={selectedWilaya}
-              onChange={(e) => setSelectedWilaya(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg text-sm font-mono text-white focus:outline-none focus:border-cyan-500 appearance-none cursor-pointer"
-            >
+            <div className="grid grid-cols-3 gap-2">
               {WILAYAS.map(w => (
-                <option key={w.id} value={w.id}>{w.id} - {w.name}</option>
+                <button
+                  key={w.id}
+                  onClick={() => {
+                    setSelectedWilaya(w.id);
+                    navigate('/map');
+                  }}
+                  className={clsx(
+                    "flex flex-col items-center justify-center p-2 rounded border transition-all duration-200 group",
+                    selectedWilaya === w.id
+                      ? "bg-cyan-900/40 border-cyan-500 text-cyan-400 shadow-[0_0_10px_rgba(0,243,255,0.2)]"
+                      : "bg-[#1a1a1a] border-[#333] text-gray-500 hover:border-cyan-500/50 hover:text-gray-300"
+                  )}
+                  title={w.name}
+                >
+                  <span className="text-xs font-bold font-mono">{w.id}</span>
+                  <span className="text-[8px] font-mono uppercase truncate w-full text-center opacity-70 group-hover:opacity-100">{w.name.split(' ')[0]}</span>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
         </div>
 
