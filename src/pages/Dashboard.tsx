@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCameras } from '../context/CameraContext';
 import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Activity, AlertTriangle, CheckCircle2, Download, Video, UserPlus } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Download, Video, UserPlus, Smartphone } from 'lucide-react';
 import { format } from 'date-fns';
 import { WILAYAS } from '../constants/wilayas';
 import * as XLSX from 'xlsx';
@@ -14,7 +14,26 @@ export const Dashboard: React.FC = () => {
   const [viewerUsername, setViewerUsername] = useState('');
   const [viewerPassword, setViewerPassword] = useState('');
   const [viewerMsg, setViewerMsg] = useState({ type: '', text: '' });
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const canCreateViewer = user?.role === 'Admin' || user?.role === 'User';
 
   const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '16') || WILAYAS[0];
@@ -195,6 +214,49 @@ export const Dashboard: React.FC = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile App Section */}
+      <div className="glass-panel p-6 rounded-xl border-t-4 border-t-green-500">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-green-900/20 rounded-2xl">
+              <Smartphone className="w-10 h-10 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider font-mono">Mobile Access</h3>
+              <p className="text-gray-400 text-sm font-mono mt-1 max-w-md">
+                Install this system as a standalone application on your Android or iOS device for quick field access.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-center gap-2">
+            {deferredPrompt ? (
+              <button
+                onClick={handleInstall}
+                className="px-8 py-3 bg-green-500 text-black font-bold rounded-lg hover:bg-green-400 font-mono text-sm uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(57,255,20,0.3)] flex items-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                Install App
+              </button>
+            ) : (
+              <div className="text-center">
+                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">Installation Guide</p>
+                <div className="flex gap-4">
+                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400">
+                    <span className="text-cyan-400 block mb-1">ANDROID</span>
+                    Open Chrome Menu → "Install App"
+                  </div>
+                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400">
+                    <span className="text-cyan-400 block mb-1">IOS / SAFARI</span>
+                    Tap Share → "Add to Home Screen"
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
