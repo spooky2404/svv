@@ -134,9 +134,31 @@ export const CameraGrid: React.FC = () => {
                   <VideoOff className="w-10 h-10 text-[#ff003c] opacity-50 mb-2" />
                   <span className="text-xs font-mono text-[#ff003c] tracking-widest uppercase">Signal Lost</span>
                   {cam.offlineReason && (
-                    <span className="mt-2 px-2 py-1 bg-red-900/40 border border-red-500/30 rounded text-[10px] font-mono text-red-400">
-                      ERR_CODE: {cam.offlineReason}
-                    </span>
+                    <div className="mt-3">
+                      {canEdit ? (
+                        <div className="relative group">
+                          <select
+                            value={cam.offlineReason}
+                            onChange={(e) => handleReasonChange(cam.id, e.target.value as OfflineReason)}
+                            title="Select Offline Reason"
+                            className="bg-red-900/40 border border-red-500/50 rounded-md text-[11px] font-mono text-red-400 px-3 py-1.5 focus:outline-none focus:border-red-400 cursor-pointer appearance-none text-center hover:bg-red-900/60 transition-all shadow-[0_0_10px_rgba(255,0,60,0.1)]"
+                          >
+                            <option value="ERSV">ERR_CODE: ERSV</option>
+                            <option value="ERMA">ERR_CODE: ERMA</option>
+                            <option value="AT">ERR_CODE: AT</option>
+                          </select>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
+                            <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="px-3 py-1.5 bg-red-900/40 border border-red-500/30 rounded-md text-[11px] font-mono text-red-400 shadow-[0_0_10px_rgba(255,0,60,0.1)]">
+                          ERR_CODE: {cam.offlineReason}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { useCameras } from '../context/CameraContext';
+import { useCameras, OfflineReason } from '../context/CameraContext';
+import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -47,8 +48,10 @@ const MapUpdater: React.FC<{ center: [number, number], wilayaId: string }> = ({ 
 };
 
 export const MapPage: React.FC = () => {
-  const { cameras, selectedWilaya, setSelectedWilaya } = useCameras();
+  const { cameras, selectedWilaya, setSelectedWilaya, updateCameraStatus } = useCameras();
+  const { user } = useAuth();
   
+  const canEdit = user?.role === 'Admin' || user?.role === 'User';
   const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '16') || WILAYAS[0];
   const center: [number, number] = [wilaya.lat, wilaya.lng];
 
@@ -121,9 +124,24 @@ export const MapPage: React.FC = () => {
                         <Video className="w-3 h-3" /> Online
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[#ff003c] text-xs font-mono uppercase">
-                        <AlertTriangle className="w-3 h-3" /> Offline ({cam.offlineReason})
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-[#ff003c] text-xs font-mono uppercase">
+                          <AlertTriangle className="w-3 h-3" /> Offline
+                        </span>
+                        {canEdit ? (
+                          <select
+                            value={cam.offlineReason || ''}
+                            onChange={(e) => updateCameraStatus(cam.id, 'Offline', e.target.value as OfflineReason)}
+                            className="bg-red-900/20 border border-red-500/30 text-red-400 text-[10px] font-mono rounded px-1.5 py-0.5 focus:outline-none focus:border-red-500 cursor-pointer"
+                          >
+                            <option value="ERSV">ERSV</option>
+                            <option value="ERMA">ERMA</option>
+                            <option value="AT">AT</option>
+                          </select>
+                        ) : (
+                          <span className="text-[#ff003c] text-[10px] font-mono">({cam.offlineReason})</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <p className="text-xs text-gray-500">{cam.location}</p>
