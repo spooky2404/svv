@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required) - Firebase Auth UID
+    //   - email: string (required, email format) - User email
+    //   - role: string (required, Admin/User/Viewer) - User access level
+    //   - username: string (optional) - Display name
+    //
+    // Collection: cameras
+    // Document ID: {cameraId}
+    // Fields:
+    //   - id: string (required) - Device ID
+    //   - name: string (required) - Device name
+    //   - ip: string (required) - IP address
+    //   - location: string (optional) - Physical location
+    //   - status: string (required, Online/Offline) - Current status
+    //   - lastUpdate: string (optional, ISO 8601) - Last update time
+    //   - wilaya: string (required) - Region code
+    //   - failureReason: string (optional) - Reason for being offline
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin' ||
+          (request.auth.token.email == "sponki116@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isUser() {
+      let role = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return isAuthenticated() && (role == 'Admin' || role == 'User');
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['Admin', 'User', 'Viewer'];
+    }
+
+    function isValidCamera(data) {
+      return data.keys().hasAll(['id', 'name', 'ip', 'status', 'wilaya']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 &&
+             data.ip is string && data.ip.size() > 0 &&
+             data.status in ['Online', 'Offline'] &&
+             data.wilaya is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(uid) && isValidUser(request.resource.data) && (request.resource.data.role == 'Viewer' || isAdmin());
+      allow update: if isAuthenticated() && isOwner(uid) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /cameras/{cameraId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isUser();
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, Lock, User as UserIcon } from 'lucide-react';
+import { ShieldAlert, LogIn } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
+    setIsLoggingIn(true);
+    setError('');
     try {
-      login(username, password);
+      await login();
       navigate('/');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Authentication failed. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -41,55 +43,25 @@ export const Login: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">Operator ID</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon className="h-5 w-5 text-gray-500" />
-              </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-[#333] rounded-lg bg-[#121212] text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all font-mono"
-                placeholder="Enter Username (e.g., admin)"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-gray-400 mb-2 uppercase tracking-wider">Access Code</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-500" />
-              </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-[#333] rounded-lg bg-[#121212] text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all font-mono"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
+        <div className="space-y-6">
+          <p className="text-gray-400 text-center text-xs font-mono uppercase tracking-widest leading-relaxed">
+            Authorized Personnel Only.<br/>
+            Please authenticate using your Google Account to access the surveillance network.
+          </p>
 
           <button
-            type="submit"
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold font-mono text-black bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+            onClick={handleGoogleLogin}
+            disabled={isLoggingIn}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold font-mono text-black bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Authenticate
+            <LogIn className="w-5 h-5" />
+            {isLoggingIn ? 'Authenticating...' : 'Sign in with Google'}
           </button>
-        </form>
+        </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-400 font-mono">
-            Unregistered operator?{' '}
-            <Link to="/register" className="text-cyan-400 hover:text-cyan-300 transition-colors underline decoration-cyan-500/30 underline-offset-4">
-              Request Access
-            </Link>
+        <div className="mt-10 pt-6 border-t border-[#333] text-center">
+          <p className="text-[10px] text-gray-500 font-mono uppercase tracking-[0.2em]">
+            System Version: 2.4.0-STABLE
           </p>
         </div>
       </div>

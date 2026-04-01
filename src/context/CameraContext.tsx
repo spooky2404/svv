@@ -1,4 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  updateDoc,
+  getDocs,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from '../firebase';
 import { WILAYAS } from '../constants/wilayas';
 
 export type CameraStatus = 'Online' | 'Offline';
@@ -21,14 +32,15 @@ interface CameraContextType {
   cameras: Camera[];
   selectedWilaya: string;
   setSelectedWilaya: (wilayaId: string) => void;
-  updateCameraStatus: (id: string, status: CameraStatus, reason?: OfflineReason) => void;
-  addCamera: (camera: Omit<Camera, 'id' | 'lastUpdated'>) => void;
-  removeCamera: (id: string) => void;
+  updateCameraStatus: (id: string, status: CameraStatus, reason?: OfflineReason) => Promise<void>;
+  addCamera: (camera: Omit<Camera, 'id' | 'lastUpdated'>) => Promise<void>;
+  removeCamera: (id: string) => Promise<void>;
+  loading: boolean;
 }
 
 const CameraContext = createContext<CameraContextType | undefined>(undefined);
 
-// Mock data for Alger Center cameras
+// Mock data for Alger Center cameras (initial bootstrap)
 const initialCameras: Camera[] = [
   { id: 'CAM-001', name: 'Grande Poste', ipAddress: '192.168.1.101', location: "Grande Poste d'Alger", wilaya: '16', lat: 36.7725, lng: 3.0560, status: 'Online', offlineReason: null, lastUpdated: new Date().toISOString() },
   { id: 'CAM-002', name: 'Place Audin', ipAddress: '192.168.1.102', location: 'Place Maurice Audin', wilaya: '16', lat: 36.7711, lng: 3.0544, status: 'Online', offlineReason: null, lastUpdated: new Date().toISOString() },
@@ -43,47 +55,55 @@ const initialCameras: Camera[] = [
 ];
 
 export const CameraProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedWilaya, setSelectedWilaya] = useState<string>('16'); // Default to Alger
-  const [cameras, setCameras] = useState<Camera[]>(() => {
-    const saved = localStorage.getItem('cameras');
-    if (saved) return JSON.parse(saved);
-    return initialCameras;
-  });
+  const [selectedWilaya, setSelectedWilaya] = useState<string>('16');
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('cameras', JSON.stringify(cameras));
-  }, [cameras]);
+    const q = collection(db, 'cameras');
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      if (snapshot.empty) {
+        // Bootstrap initial data if collection is empty
+        const batch = writeBatch(db);
+        initialCameras.forEach(cam => {
+          const docRef = doc(db, 'cameras', cam.id);
+          batch.set(docRef, cam);
+        });
+        await batch.commit();
+      } else {
+        const camerasList = snapshot.docs.map(doc => doc.data() as Camera);
+        setCameras(camerasList);
+      }
+      setLoading(false);
+    });
 
-  const addCamera = (cameraData: Omit<Camera, 'id' | 'lastUpdated'>) => {
+    return () => unsubscribe();
+  }, []);
+
+  const addCamera = async (cameraData: Omit<Camera, 'id' | 'lastUpdated'>) => {
     const newId = `CAM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
     const newCamera: Camera = {
       ...cameraData,
       id: newId,
       lastUpdated: new Date().toISOString()
     };
-    setCameras(prev => [...prev, newCamera]);
+    await setDoc(doc(db, 'cameras', newId), newCamera);
   };
 
-  const removeCamera = (id: string) => {
-    setCameras(prev => prev.filter(cam => cam.id !== id));
+  const removeCamera = async (id: string) => {
+    await deleteDoc(doc(db, 'cameras', id));
   };
 
-  const updateCameraStatus = (id: string, status: CameraStatus, reason: OfflineReason = null) => {
-    setCameras(prev => prev.map(cam => {
-      if (cam.id === id) {
-        return {
-          ...cam,
-          status,
-          offlineReason: status === 'Offline' ? reason : null,
-          lastUpdated: new Date().toISOString()
-        };
-      }
-      return cam;
-    }));
+  const updateCameraStatus = async (id: string, status: CameraStatus, reason: OfflineReason = null) => {
+    await updateDoc(doc(db, 'cameras', id), {
+      status,
+      offlineReason: status === 'Offline' ? reason : null,
+      lastUpdated: new Date().toISOString()
+    });
   };
 
   return (
-    <CameraContext.Provider value={{ cameras, selectedWilaya, setSelectedWilaya, updateCameraStatus, addCamera, removeCamera }}>
+    <CameraContext.Provider value={{ cameras, selectedWilaya, setSelectedWilaya, updateCameraStatus, addCamera, removeCamera, loading }}>
       {children}
     </CameraContext.Provider>
   );

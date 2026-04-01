@@ -1,4 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  onAuthStateChanged, 
+  signOut, 
+  User as FirebaseUser 
+} from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  onSnapshot, 
+  query, 
+  where,
+  deleteDoc
+} from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 export type Role = 'Admin' | 'User' | 'Viewer';
 
@@ -6,83 +24,88 @@ export interface User {
   id: string;
   username: string;
   role: Role;
-  password?: string;
+  email: string;
+  uid: string;
 }
 
 interface AuthContextType {
   user: User | null;
   users: User[];
-  login: (username: string, password?: string) => void;
-  logout: () => void;
-  addUser: (username: string, role: Role, password?: string) => void;
-  deleteUser: (id: string) => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+  addUser: (email: string, username: string, role: Role) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const [users, setUsers] = useState<User[]>(() => {
-    const savedUsers = localStorage.getItem('users');
-    if (savedUsers) return JSON.parse(savedUsers);
-    
-    // Default admin user
-    const defaultAdmin: User = { id: '1', username: 'admin', role: 'Admin', password: 'admin' };
-    localStorage.setItem('users', JSON.stringify([defaultAdmin]));
-    return [defaultAdmin];
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('currentUser');
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          setUser(userDoc.data() as User);
+        } else {
+          // Default role for new users (except the bootstrap admin)
+          const isAdmin = firebaseUser.email === 'sponki116@gmail.com';
+          const newUser: User = {
+            id: firebaseUser.uid,
+            uid: firebaseUser.uid,
+            username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+            email: firebaseUser.email || '',
+            role: isAdmin ? 'Admin' : 'Viewer',
+          };
+          await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+          setUser(newUser);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user?.role === 'Admin') {
+      const q = collection(db, 'users');
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const usersList = snapshot.docs.map(doc => doc.data() as User);
+        setUsers(usersList);
+      });
+      return () => unsubscribe();
     }
   }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('users', JSON.stringify(users));
-  }, [users]);
-
-  const login = (username: string, password?: string) => {
-    const existingUser = users.find(u => u.username === username);
-    if (existingUser) {
-      if (existingUser.password && existingUser.password !== password) {
-        throw new Error('Invalid password.');
-      }
-      setUser(existingUser);
-    } else {
-      throw new Error('User not found. Please contact an Admin.');
-    }
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  const addUser = (username: string, role: Role, password?: string) => {
-    if (users.some(u => u.username === username)) {
-      throw new Error('Username already exists');
-    }
-    const newUser: User = {
-      id: Date.now().toString(),
-      username,
-      role,
-      password: password || 'password',
-    };
-    setUsers([...users, newUser]);
+  const addUser = async (email: string, username: string, role: Role) => {
+    // Note: In this simple setup, we can't pre-create Auth users easily.
+    // We'll store the invitation/role in a separate collection if needed, 
+    // but for now, we'll just allow admins to see the user list.
+    // Real user creation happens on first login.
   };
 
-  const deleteUser = (id: string) => {
-    setUsers(users.filter(u => u.id !== id));
+  const deleteUser = async (id: string) => {
+    await deleteDoc(doc(db, 'users', id));
   };
 
   return (
-    <AuthContext.Provider value={{ user, users, login, logout, addUser, deleteUser }}>
+    <AuthContext.Provider value={{ user, users, login, logout, addUser, deleteUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
