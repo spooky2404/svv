@@ -111,31 +111,20 @@ export const MobileApp: React.FC = () => {
             </div>
 
             <div className="pt-4">
-              <div className="w-full aspect-square bg-white p-4 rounded-xl flex items-center justify-center">
-                {/* Simulated QR Code */}
-                <div className="w-full h-full border-4 border-black relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-                  <div className="grid grid-cols-8 grid-rows-8 w-full h-full gap-1">
-                    {Array.from({ length: 64 }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`w-full h-full ${Math.random() > 0.5 ? 'bg-black' : 'bg-transparent'}`}
-                      />
-                    ))}
-                  </div>
-                  {/* QR Corners */}
-                  <div className="absolute top-0 left-0 w-1/4 h-1/4 bg-white p-1">
-                    <div className="w-full h-full border-4 border-black" />
-                  </div>
-                  <div className="absolute top-0 right-0 w-1/4 h-1/4 bg-white p-1">
-                    <div className="w-full h-full border-4 border-black" />
-                  </div>
-                  <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-white p-1">
-                    <div className="w-full h-full border-4 border-black" />
-                  </div>
-                </div>
+              <div className="p-6 bg-cyan-900/10 border border-cyan-500/30 rounded-2xl text-center space-y-4">
+                <p className="text-sm font-mono text-cyan-400 uppercase tracking-widest">Direct Access Link</p>
+                <a 
+                  href={`http://${window.location.hostname}:3000`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-3 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-all font-mono text-xs uppercase tracking-widest"
+                >
+                  Open in New Tab
+                </a>
+                <p className="text-[10px] font-mono text-gray-500 uppercase leading-relaxed">
+                  Copy this link and send it to your phone via email or messaging app.
+                </p>
               </div>
-              <p className="text-center text-[10px] font-mono text-gray-500 uppercase mt-2 tracking-widest">Scan to Open Terminal</p>
             </div>
           </div>
         </div>
