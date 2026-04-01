@@ -12,6 +12,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         manifest: {
           name: 'ERSV Surveillance System',
           short_name: 'ERSV MAP',
@@ -19,16 +20,21 @@ export default defineConfig(({mode}) => {
           theme_color: '#0a0a0a',
           background_color: '#0a0a0a',
           display: 'standalone',
+          orientation: 'portrait',
+          scope: '/',
+          start_url: '/',
           icons: [
             {
               src: 'https://picsum.photos/seed/surv/192/192',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             },
             {
               src: 'https://picsum.photos/seed/surv/512/512',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any maskable'
             }
           ]
         }

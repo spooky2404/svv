@@ -14,6 +14,7 @@ import { Dashboard } from './pages/Dashboard';
 import { CameraGrid } from './pages/CameraGrid';
 import { MapPage } from './pages/MapPage';
 import { UserManagement } from './pages/UserManagement';
+import { MobileApp } from './pages/MobileApp';
 
 const AppContent: React.FC = () => {
   const { loading } = useAuth();
@@ -39,6 +40,7 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/cameras" element={<CameraGrid />} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/mobile" element={<MobileApp />} />
             
             {/* Admin Only Route */}
             <Route element={<ProtectedRoute adminOnly />}>

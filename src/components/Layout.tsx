@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCameras } from '../context/CameraContext';
-import { LayoutDashboard, Camera, Users, LogOut, Map as MapIcon, MapPin } from 'lucide-react';
+import { LayoutDashboard, Camera, Users, LogOut, Map as MapIcon, MapPin, Smartphone } from 'lucide-react';
 import { WILAYAS } from '../constants/wilayas';
 import clsx from 'clsx';
 
@@ -26,6 +26,7 @@ export const Layout: React.FC = () => {
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/cameras', icon: Camera, label: 'Camera Grid' },
     { to: '/map', icon: MapIcon, label: 'Live Map' },
+    { to: '/mobile', icon: Smartphone, label: 'Mobile App' },
   ];
 
   if (user?.role === 'Admin') {
