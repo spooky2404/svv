@@ -39,6 +39,7 @@ export const Dashboard: React.FC = () => {
   const simulateGeneration = (type: 'android' | 'ios') => {
     setIsGenerating(true);
     setGenerationProgress(0);
+    setViewerMsg({ type: '', text: '' });
     
     const interval = setInterval(() => {
       setGenerationProgress(prev => {
@@ -49,9 +50,12 @@ export const Dashboard: React.FC = () => {
             if (type === 'android' && deferredPrompt) {
               handleInstall();
             } else {
-              alert(type === 'android' 
-                ? "APK Generated! Please use the 'Install App' option in your browser menu to complete installation." 
-                : "iOS Package Ready! Please tap 'Share' and 'Add to Home Screen' to install.");
+              setViewerMsg({ 
+                type: 'success', 
+                text: type === 'android' 
+                  ? "APP READY: To install, open your Chrome menu (three dots ⋮) and select 'Install App'." 
+                  : "APP READY: To install, tap the 'Share' icon in Safari and select 'Add to Home Screen'."
+              });
             }
           }, 500);
           return 100;
@@ -253,9 +257,9 @@ export const Dashboard: React.FC = () => {
               <Smartphone className="w-10 h-10 text-green-400" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white uppercase tracking-wider font-mono">Mobile Access</h3>
+              <h3 className="text-xl font-bold text-white uppercase tracking-wider font-mono">Mobile Access (App)</h3>
               <p className="text-gray-400 text-sm font-mono mt-1 max-w-md">
-                Install this system as a standalone application on your Android or iOS device for quick field access.
+                This system is a <span className="text-cyan-400">Progressive Web App (PWA)</span>. It installs directly to your home screen without needing a separate APK file.
               </p>
             </div>
           </div>
@@ -264,7 +268,7 @@ export const Dashboard: React.FC = () => {
             {isGenerating ? (
               <div className="w-64 space-y-2">
                 <div className="flex justify-between text-[10px] font-mono text-cyan-400 uppercase tracking-widest">
-                  <span>Building Package...</span>
+                  <span>Preparing App...</span>
                   <span>{generationProgress}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-[#1a1a1a] rounded-full overflow-hidden border border-[#333]">
@@ -280,26 +284,22 @@ export const Dashboard: React.FC = () => {
                 className="px-8 py-3 bg-green-500 text-black font-bold rounded-lg hover:bg-green-400 font-mono text-sm uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(57,255,20,0.3)] flex items-center gap-2"
               >
                 <Download className="w-5 h-5" />
-                Download APK
+                Install App Now
               </button>
             ) : (
               <div className="text-center">
-                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">Select Platform to Generate</p>
+                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">How to Install</p>
                 <div className="flex gap-4">
-                  <button 
-                    onClick={() => simulateGeneration('android')}
-                    className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer text-left"
-                  >
-                    <span className="text-cyan-400 block mb-1">ANDROID (APK)</span>
-                    Open Chrome Menu → "Install App"
-                  </button>
-                  <button 
-                    onClick={() => simulateGeneration('ios')}
-                    className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer text-left"
-                  >
+                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 text-left">
+                    <span className="text-cyan-400 block mb-1">ANDROID</span>
+                    1. Open Chrome Menu (⋮)<br/>
+                    2. Tap <span className="text-white">"Install App"</span>
+                  </div>
+                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 text-left">
                     <span className="text-cyan-400 block mb-1">IOS / SAFARI</span>
-                    Tap Share → "Add to Home Screen"
-                  </button>
+                    1. Tap Share (□ with ↑)<br/>
+                    2. Tap <span className="text-white">"Add to Home Screen"</span>
+                  </div>
                 </div>
               </div>
             )}
