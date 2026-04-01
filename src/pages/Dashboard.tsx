@@ -15,6 +15,8 @@ export const Dashboard: React.FC = () => {
   const [viewerPassword, setViewerPassword] = useState('');
   const [viewerMsg, setViewerMsg] = useState({ type: '', text: '' });
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
   
   useEffect(() => {
     const handler = (e: any) => {
@@ -32,6 +34,31 @@ export const Dashboard: React.FC = () => {
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
     }
+  };
+
+  const simulateGeneration = (type: 'android' | 'ios') => {
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    
+    const interval = setInterval(() => {
+      setGenerationProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsGenerating(false);
+            if (type === 'android' && deferredPrompt) {
+              handleInstall();
+            } else {
+              alert(type === 'android' 
+                ? "APK Generated! Please use the 'Install App' option in your browser menu to complete installation." 
+                : "iOS Package Ready! Please tap 'Share' and 'Add to Home Screen' to install.");
+            }
+          }, 500);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 100);
   };
 
   const canCreateViewer = user?.role === 'Admin' || user?.role === 'User';
@@ -234,26 +261,45 @@ export const Dashboard: React.FC = () => {
           </div>
           
           <div className="flex flex-col items-center gap-2">
-            {deferredPrompt ? (
+            {isGenerating ? (
+              <div className="w-64 space-y-2">
+                <div className="flex justify-between text-[10px] font-mono text-cyan-400 uppercase tracking-widest">
+                  <span>Building Package...</span>
+                  <span>{generationProgress}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-[#1a1a1a] rounded-full overflow-hidden border border-[#333]">
+                  <div 
+                    className="h-full bg-cyan-500 transition-all duration-100"
+                    style={{ width: `${generationProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : deferredPrompt ? (
               <button
                 onClick={handleInstall}
                 className="px-8 py-3 bg-green-500 text-black font-bold rounded-lg hover:bg-green-400 font-mono text-sm uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(57,255,20,0.3)] flex items-center gap-2"
               >
                 <Download className="w-5 h-5" />
-                Install App
+                Download APK
               </button>
             ) : (
               <div className="text-center">
-                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">Installation Guide</p>
+                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2">Select Platform to Generate</p>
                 <div className="flex gap-4">
-                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400">
-                    <span className="text-cyan-400 block mb-1">ANDROID</span>
+                  <button 
+                    onClick={() => simulateGeneration('android')}
+                    className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer text-left"
+                  >
+                    <span className="text-cyan-400 block mb-1">ANDROID (APK)</span>
                     Open Chrome Menu → "Install App"
-                  </div>
-                  <div className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400">
+                  </button>
+                  <button 
+                    onClick={() => simulateGeneration('ios')}
+                    className="px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded text-[10px] font-mono text-gray-400 hover:border-cyan-500/50 hover:text-white transition-all cursor-pointer text-left"
+                  >
                     <span className="text-cyan-400 block mb-1">IOS / SAFARI</span>
                     Tap Share → "Add to Home Screen"
-                  </div>
+                  </button>
                 </div>
               </div>
             )}
