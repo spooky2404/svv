@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, LogIn } from 'lucide-react';
+import { ShieldAlert, LogIn, User, Lock } from 'lucide-react';
 
 export const Login: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleGoogleLogin = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoggingIn(true);
     setError('');
     try {
-      await login();
+      await login(username, password);
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');
@@ -34,7 +37,7 @@ export const Login: React.FC = () => {
             <ShieldAlert className="w-8 h-8 text-cyan-400" />
           </div>
           <h1 className="text-2xl font-bold tracking-wider text-white">ERSV MAP</h1>
-          <p className="text-cyan-500 font-mono text-sm mt-1">SECURE_LOGIN_GATEWAY</p>
+          <p className="text-cyan-500 font-mono text-sm mt-1">LOCAL_SECURE_GATEWAY</p>
         </div>
 
         {error && (
@@ -43,25 +46,54 @@ export const Login: React.FC = () => {
           </div>
         )}
 
-        <div className="space-y-6">
-          <p className="text-gray-400 text-center text-xs font-mono uppercase tracking-widest leading-relaxed">
-            Authorized Personnel Only.<br/>
-            Please authenticate using your Google Account to access the surveillance network.
-          </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="block text-xs font-mono text-gray-400 uppercase tracking-widest ml-1">Operator ID</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <User className="h-5 w-5 text-gray-600 group-focus-within:text-cyan-500 transition-colors" />
+              </div>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="block w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-mono text-sm"
+                placeholder="USERNAME"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-mono text-gray-400 uppercase tracking-widest ml-1">Access Key</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Lock className="h-5 w-5 text-gray-600 group-focus-within:text-cyan-500 transition-colors" />
+              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-mono text-sm"
+                placeholder="PASSWORD"
+                required
+              />
+            </div>
+          </div>
 
           <button
-            onClick={handleGoogleLogin}
+            type="submit"
             disabled={isLoggingIn}
             className="w-full flex items-center justify-center gap-3 py-4 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold font-mono text-black bg-cyan-400 hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <LogIn className="w-5 h-5" />
-            {isLoggingIn ? 'Authenticating...' : 'Sign in with Google'}
+            {isLoggingIn ? 'Authenticating...' : 'Establish Link'}
           </button>
-        </div>
+        </form>
 
         <div className="mt-10 pt-6 border-t border-[#333] text-center">
           <p className="text-[10px] text-gray-500 font-mono uppercase tracking-[0.2em]">
-            System Version: 2.4.0-STABLE
+            System Version: 2.4.0-STABLE // Local Access Only
           </p>
         </div>
       </div>

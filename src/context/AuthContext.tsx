@@ -1,22 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  onAuthStateChanged, 
-  signOut, 
-  User as FirebaseUser 
-} from 'firebase/auth';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  collection, 
-  onSnapshot, 
-  query, 
-  where,
-  deleteDoc
-} from 'firebase/firestore';
-import { auth, db } from '../firebase';
 
 export type Role = 'Admin' | 'User' | 'Viewer';
 
@@ -24,16 +6,15 @@ export interface User {
   id: string;
   username: string;
   role: Role;
-  email: string;
-  uid: string;
+  password?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   users: User[];
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-  addUser: (email: string, username: string, role: Role) => Promise<void>;
+  login: (username: string, password?: string) => Promise<void>;
+  logout: () => void;
+  addUser: (username: string, role: Role, password?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   loading: boolean;
 }
@@ -41,67 +22,87 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setUser(userDoc.data() as User);
-        } else {
-          // Default role for new users (except the bootstrap admin)
-          const isAdmin = firebaseUser.email === 'sponki116@gmail.com';
-          const newUser: User = {
-            id: firebaseUser.uid,
-            uid: firebaseUser.uid,
-            username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-            email: firebaseUser.email || '',
-            role: isAdmin ? 'Admin' : 'Viewer',
-          };
-          await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-          setUser(newUser);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user?.role === 'Admin') {
-      const q = collection(db, 'users');
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const usersList = snapshot.docs.map(doc => doc.data() as User);
-        setUsers(usersList);
-      });
-      return () => unsubscribe();
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('currentUser');
     }
   }, [user]);
 
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (user?.role === 'Admin') {
+        try {
+          const res = await fetch('/api/users');
+          if (res.ok) {
+            const data = await res.json();
+            setUsers(data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch users", err);
+        }
+      }
+      setLoading(false);
+    };
+    fetchUsers();
+  }, [user]);
+
+  const login = async (username: string, password?: string) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (res.ok) {
+      const userData = await res.json();
+      setUser(userData);
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Login failed');
+    }
   };
 
-  const logout = async () => {
-    await signOut(auth);
+  const logout = () => {
+    setUser(null);
   };
 
-  const addUser = async (email: string, username: string, role: Role) => {
-    // Note: In this simple setup, we can't pre-create Auth users easily.
-    // We'll store the invitation/role in a separate collection if needed, 
-    // but for now, we'll just allow admins to see the user list.
-    // Real user creation happens on first login.
+  const addUser = async (username: string, role: Role, password?: string) => {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, role, password }),
+    });
+
+    if (res.ok) {
+      // Refresh user list
+      const usersRes = await fetch('/api/users');
+      const data = await usersRes.json();
+      setUsers(data);
+    } else {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Failed to add user');
+    }
   };
 
   const deleteUser = async (id: string) => {
-    await deleteDoc(doc(db, 'users', id));
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (res.ok) {
+      setUsers(prev => prev.filter(u => u.id !== id));
+    } else {
+      throw new Error('Failed to delete user');
+    }
   };
 
   return (

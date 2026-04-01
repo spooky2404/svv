@@ -23,7 +23,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
-          <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest animate-pulse">Initializing Network...</p>
+          <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest animate-pulse">Initializing Local Network...</p>
         </div>
       </div>
     );
