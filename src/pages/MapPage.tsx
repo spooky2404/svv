@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useCameras, OfflineReason } from '../context/CameraContext';
 import { useAuth } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+// Leaflet CSS is imported in index.css
 import L from 'leaflet';
 import { Video, AlertTriangle, MapPin } from 'lucide-react';
 import { WILAYAS } from '../constants/wilayas';
@@ -31,6 +31,11 @@ const offlineIcon = createCustomIcon('#ff003c');
 const MapUpdater: React.FC<{ center: [number, number], wilayaId: string }> = ({ center, wilayaId }) => {
   const map = useMap();
   useEffect(() => {
+    // Force leaflet to recalculate its container size
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
     // Determine bounds size based on wilaya (southern wilayas are larger and need bigger bounds)
     const isSouth = ['1', '8', '11', '30', '32', '33', '37', '39', '47', '50', '52', '53', '54', '56'].includes(wilayaId);
     const offset = isSouth ? 3.0 : 0.8; 
@@ -79,8 +84,13 @@ export const MapPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 glass-panel rounded-xl overflow-hidden border border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.1)] relative z-0">
-        <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', background: '#0a0a0a' }}>
+      <div className="flex-1 glass-panel rounded-xl overflow-hidden border border-cyan-500/30 shadow-[0_0_20px_rgba(0,243,255,0.1)] relative min-h-[500px]">
+        <MapContainer 
+          center={center} 
+          zoom={11} 
+          style={{ height: '70vh', minHeight: '500px', width: '100%', background: '#0a0a0a' }}
+          className="z-0"
+        >
           <MapUpdater center={center} wilayaId={selectedWilaya} />
           
           <LayersControl position="topright">
