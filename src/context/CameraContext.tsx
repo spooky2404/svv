@@ -29,7 +29,7 @@ interface CameraContextType {
 const CameraContext = createContext<CameraContextType | undefined>(undefined);
 
 export const CameraProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedWilaya, setSelectedWilaya] = useState<string>('16');
+  const [selectedWilaya, setSelectedWilaya] = useState<string>('35');
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [loading, setLoading] = useState(true);
 

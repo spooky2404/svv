@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCameras } from '../context/CameraContext';
 import { useAuth } from '../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Activity, AlertTriangle, CheckCircle2, Download, Video, UserPlus, Smartphone } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Download, Video, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { WILAYAS } from '../constants/wilayas';
 import * as XLSX from 'xlsx';
@@ -16,20 +16,10 @@ export const Dashboard: React.FC = () => {
   const [viewerUsername, setViewerUsername] = useState('');
   const [viewerPassword, setViewerPassword] = useState('');
   const [viewerMsg, setViewerMsg] = useState({ type: '', text: '' });
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
   const canCreateViewer = user?.role === 'Admin' || user?.role === 'User';
 
-  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '16') || WILAYAS[0];
+  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '35') || WILAYAS[0];
   const filteredCameras = cameras.filter(c => c.wilaya === selectedWilaya);
 
   const total = filteredCameras.length;
@@ -207,33 +197,6 @@ export const Dashboard: React.FC = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile App Section */}
-      <div className="glass-panel p-6 rounded-xl border-t-4 border-t-green-500">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-green-900/20 rounded-2xl">
-              <Smartphone className="w-10 h-10 text-green-400" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white uppercase tracking-wider font-mono">Mobile Access (App)</h3>
-              <p className="text-gray-400 text-sm font-mono mt-1 max-w-md">
-                This system is a <span className="text-cyan-400">Progressive Web App (PWA)</span>. It installs directly to your home screen without needing a separate APK file.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center gap-2">
-            <Link
-              to="/mobile"
-              className="px-8 py-3 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 font-mono text-sm uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(0,243,255,0.3)] flex items-center gap-2"
-            >
-              <Smartphone className="w-5 h-5" />
-              Get Mobile App
-            </Link>
           </div>
         </div>
       </div>

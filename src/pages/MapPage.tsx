@@ -52,7 +52,7 @@ export const MapPage: React.FC = () => {
   const { user } = useAuth();
   
   const canEdit = user?.role === 'Admin' || user?.role === 'User';
-  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '16') || WILAYAS[0];
+  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '35') || WILAYAS[0];
   const center: [number, number] = [wilaya.lat, wilaya.lng];
 
   const filteredCameras = cameras.filter(cam => cam.wilaya === selectedWilaya);

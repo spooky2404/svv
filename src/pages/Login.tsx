@@ -47,6 +47,11 @@ export const Login: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="text-center pb-2">
+            <p className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-widest">
+              Standard Access: admin // admin
+            </p>
+          </div>
           <div className="space-y-2">
             <label className="block text-xs font-mono text-gray-400 uppercase tracking-widest ml-1">Operator ID</label>
             <div className="relative group">
@@ -58,7 +63,7 @@ export const Login: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="block w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-mono text-sm"
-                placeholder="USERNAME"
+                placeholder="admin"
                 required
               />
             </div>
@@ -75,7 +80,7 @@ export const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="block w-full pl-12 pr-4 py-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 transition-all font-mono text-sm"
-                placeholder="PASSWORD"
+                placeholder="admin"
                 required
               />
             </div>

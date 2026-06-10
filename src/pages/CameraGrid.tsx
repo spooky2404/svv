@@ -16,7 +16,7 @@ export const CameraGrid: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCam, setNewCam] = useState({ name: '', ipAddress: '', location: '', wilaya: selectedWilaya, lat: 36.77, lng: 3.05, status: 'Online' as CameraStatus });
 
-  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '16') || WILAYAS[0];
+  const wilaya = WILAYAS.find(w => w.id === selectedWilaya) || WILAYAS.find(w => w.id === '35') || WILAYAS[0];
 
   useEffect(() => {
     if (showAddModal) {

@@ -13,7 +13,22 @@ const CAMERAS_FILE = path.join(DATA_DIR, "cameras.json");
 
 // Ensure data directory and files exist
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify([{ id: "1", username: "admin", role: "Admin", password: "admin" }]));
+
+const defaultAdmin = [{ id: "1", username: "admin", role: "Admin", password: "admin" }];
+
+if (!fs.existsSync(USERS_FILE)) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(defaultAdmin, null, 2));
+} else {
+  try {
+    const users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+    if (!Array.isArray(users) || users.length === 0) {
+      fs.writeFileSync(USERS_FILE, JSON.stringify(defaultAdmin, null, 2));
+    }
+  } catch (e) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(defaultAdmin, null, 2));
+  }
+}
+
 if (!fs.existsSync(CAMERAS_FILE)) fs.writeFileSync(CAMERAS_FILE, JSON.stringify([]));
 
 async function startServer() {
@@ -26,15 +41,29 @@ async function startServer() {
 
   // User Login
   app.post("/api/auth/login", (req, res) => {
-    const { username, password } = req.body;
-    const users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
-    const user = users.find((u: any) => u.username === username && u.password === password);
-    
-    if (user) {
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
-    } else {
-      res.status(401).json({ error: "Invalid credentials" });
+    try {
+      const { username, password } = req.body;
+      console.log(`[AUTH] Login attempt: username="${username}"`);
+      
+      const usersRaw = fs.readFileSync(USERS_FILE, "utf-8");
+      const users = JSON.parse(usersRaw);
+      
+      const user = users.find((u: any) => 
+        u.username.trim().toLowerCase() === username?.trim().toLowerCase() && 
+        u.password.trim() === password?.trim()
+      );
+      
+      if (user) {
+        console.log(`[AUTH] Login successful for: ${username}`);
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      } else {
+        console.warn(`[AUTH] Login failed for: ${username} - Invalid credentials`);
+        res.status(401).json({ error: "Invalid credentials" });
+      }
+    } catch (error) {
+      console.error("[AUTH] Login error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
