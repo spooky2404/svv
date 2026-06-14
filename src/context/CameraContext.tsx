@@ -23,6 +23,7 @@ interface CameraContextType {
   updateCameraStatus: (id: string, status: CameraStatus, reason?: OfflineReason) => Promise<void>;
   addCamera: (camera: Omit<Camera, 'id' | 'lastUpdated'>) => Promise<void>;
   removeCamera: (id: string) => Promise<void>;
+  importCameras: (cameras: Camera[]) => Promise<void>;
   loading: boolean;
 }
 
@@ -49,6 +50,25 @@ export const CameraProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     fetchCameras();
   }, []);
+
+  const importCameras = async (newCameras: Camera[]) => {
+    const res = await fetch('/api/cameras/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCameras),
+    });
+
+    if (res.ok) {
+      // Re-fetch all cameras to keep state in sync
+      const fetchRes = await fetch('/api/cameras');
+      if (fetchRes.ok) {
+        const data = await fetchRes.json();
+        setCameras(data);
+      }
+    } else {
+      throw new Error('Failed to import cameras');
+    }
+  };
 
   const addCamera = async (cameraData: Omit<Camera, 'id' | 'lastUpdated'>) => {
     const newId = `CAM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;

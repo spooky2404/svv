@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useCameras, OfflineReason } from '../context/CameraContext';
 import { useAuth } from '../context/AuthContext';
-import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 // Leaflet CSS is imported in index.css
 import L from 'leaflet';
 import { Video, AlertTriangle, MapPin } from 'lucide-react';
@@ -93,80 +94,67 @@ export const MapPage: React.FC = () => {
         >
           <MapUpdater center={center} wilayaId={selectedWilaya} />
           
-          <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="Dark Theme (Default)">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              />
-            </LayersControl.BaseLayer>
-            
-            <LayersControl.BaseLayer name="Satellite View">
-              <TileLayer
-                attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              />
-            </LayersControl.BaseLayer>
-
-            <LayersControl.BaseLayer name="Street Map">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-            </LayersControl.BaseLayer>
-          </LayersControl>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
           
-          {filteredCameras.map(cam => (
-            <Marker 
-              key={cam.id} 
-              position={[cam.lat, cam.lng]}
-              icon={cam.status === 'Online' ? onlineIcon : offlineIcon}
-            >
-              <Popup className="custom-popup">
-                <div className="p-2 bg-[#121212] text-white rounded-lg min-w-[200px] border border-[#333]">
-                  <h3 className="font-bold text-lg mb-1">{cam.name}</h3>
-                  <p className="text-xs text-gray-400 font-mono mb-1">{cam.id}</p>
-                  <p className="text-[10px] text-cyan-500 font-mono mb-3">IP: {cam.ipAddress}</p>
-                  
-                  <div className="flex items-center gap-2 mb-2">
-                    {cam.status === 'Online' ? (
-                      <span className="flex items-center gap-1 text-[#39ff14] text-xs font-mono uppercase">
-                        <Video className="w-3 h-3" /> Online
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-[#ff003c] text-xs font-mono uppercase">
-                          <AlertTriangle className="w-3 h-3" /> Offline
+          <MarkerClusterGroup
+            spiderfyOnMaxZoom={true}
+            showCoverageOnHover={false}
+          >
+            {filteredCameras.map(cam => (
+              <Marker 
+                key={cam.id} 
+                position={[cam.lat, cam.lng]}
+                icon={cam.status === 'Online' ? onlineIcon : offlineIcon}
+              >
+                <Popup className="custom-popup">
+                  <div className="p-2 bg-[#121212] text-white rounded-lg min-w-[200px] border border-[#333]">
+                    <h3 className="font-bold text-lg mb-1">{cam.name}</h3>
+                    <p className="text-xs text-gray-400 font-mono mb-1">{cam.id}</p>
+                    <p className="text-[10px] text-cyan-500 font-mono mb-3">IP: {cam.ipAddress}</p>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      {cam.status === 'Online' ? (
+                        <span className="flex items-center gap-1 text-[#39ff14] text-xs font-mono uppercase">
+                          <Video className="w-3 h-3" /> Online
                         </span>
-                        {canEdit ? (
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={cam.offlineReason || ''}
-                              onChange={(e) => updateCameraStatus(cam.id, 'Offline', e.target.value as OfflineReason)}
-                              className="bg-red-900/20 border border-red-500/30 text-red-400 text-[10px] font-mono rounded px-1.5 py-0.5 focus:outline-none focus:border-red-500 cursor-pointer"
-                            >
-                              <option value="ERSV">ERSV</option>
-                              <option value="ERMA">ERMA</option>
-                              <option value="AT">AT</option>
-                            </select>
-                            <button
-                              onClick={() => updateCameraStatus(cam.id, 'Online')}
-                              className="px-2 py-0.5 bg-green-900/20 border border-green-500/30 text-[#39ff14] text-[10px] font-mono uppercase rounded hover:bg-green-900/40 transition-colors"
-                            >
-                              Restore
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[#ff003c] text-[10px] font-mono">({cam.offlineReason})</span>
-                        )}
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1 text-[#ff003c] text-xs font-mono uppercase">
+                            <AlertTriangle className="w-3 h-3" /> Offline
+                          </span>
+                          {canEdit ? (
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={cam.offlineReason || ''}
+                                onChange={(e) => updateCameraStatus(cam.id, 'Offline', e.target.value as OfflineReason)}
+                                className="bg-red-900/20 border border-red-500/30 text-red-400 text-[10px] font-mono rounded px-1.5 py-0.5 focus:outline-none focus:border-red-500 cursor-pointer"
+                              >
+                                <option value="ERSV">ERSV</option>
+                                <option value="ERMA">ERMA</option>
+                                <option value="AT">AT</option>
+                              </select>
+                              <button
+                                onClick={() => updateCameraStatus(cam.id, 'Online')}
+                                className="px-2 py-0.5 bg-green-900/20 border border-green-500/30 text-[#39ff14] text-[10px] font-mono uppercase rounded hover:bg-green-900/40 transition-colors"
+                              >
+                                Restore
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[#ff003c] text-[10px] font-mono">({cam.offlineReason})</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">{cam.location}</p>
                   </div>
-                  <p className="text-xs text-gray-500">{cam.location}</p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+                </Popup>
+              </Marker>
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
       </div>
       

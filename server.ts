@@ -125,6 +125,33 @@ async function startServer() {
     res.json({ success: true });
   });
 
+  // Bulk Update/Import Cameras
+  app.post("/api/cameras/bulk", (req, res) => {
+    try {
+      const newCameras = req.body;
+      if (!Array.isArray(newCameras)) {
+        return res.status(400).json({ error: "Invalid data format. Expected an array." });
+      }
+
+      let cameras = JSON.parse(fs.readFileSync(CAMERAS_FILE, "utf-8"));
+      
+      newCameras.forEach((cam: any) => {
+        const index = cameras.findIndex((c: any) => c.id === cam.id);
+        if (index !== -1) {
+          cameras[index] = { ...cameras[index], ...cam };
+        } else {
+          cameras.push(cam);
+        }
+      });
+      
+      fs.writeFileSync(CAMERAS_FILE, JSON.stringify(cameras, null, 2));
+      res.json({ success: true, count: newCameras.length });
+    } catch (error) {
+      console.error("[CAMERAS] Bulk import error:", error);
+      res.status(500).json({ error: "Failed to import cameras" });
+    }
+  });
+
   // --- VITE MIDDLEWARE ---
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
